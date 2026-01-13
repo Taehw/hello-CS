@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # 백엔드 서비스
+  backend:
+    build: ./backend
+    container_name: login-backend
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    environment:
+      - NODE_ENV=development
+    # 네트워크 로깅을 위한 추가 설정
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # 컨테이너 재시작 정책
+    restart: unless-stopped
+
+  # 프론트엔드 서비스
+  frontend:
+    build: ./frontend
+    container_name: login-frontend
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # 네트워크 모니터링을 위한 tcpdump 컨테이너
+  network-monitor:
+    image: nicolaka/netshoot
+    container_name: network-monitor
+    networks:
+      - app-network
+    command: >
+      sh -c "
+      echo '========================================';
+      echo '🔍 네트워크 모니터링 시작';
+      echo '========================================';
+      echo '';
+      echo '📡 사용 가능한 명령어:';
+      echo '  1. tcpdump -i any -nn -v';
+      echo '  2. tcpdump -i any port 3000 -A';
+      echo '  3. ngrep -q -W byline port 3000';
+      echo '';
+      echo '이 컨테이너는 네트워크 트래픽을 모니터링합니다.';
+      echo 'docker exec -it network-monitor 명령어로 접속하세요.';
+      echo '';
+      tail -f /dev/null
+      "
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+    name: login-app-network

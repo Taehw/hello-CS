@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지 - Hello</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .welcome-section {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-item {
+            margin: 10px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .info-item strong {
+            color: #333;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .network-log {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .network-log h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            color: #555;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .error-box {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #fcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="content">
+            <div class="loading">
+                <h2>🔄 로딩 중...</h2>
+                <p>인증 확인 중입니다.</p>
+            </div>
+        </div>
+
+        <div class="network-log">
+            <h3>📊 네트워크 로그</h3>
+            <div id="networkLog">
+                <div class="log-entry">대기 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        
+        // 네트워크 로그 추가 함수
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('networkLog');
+            const timestamp = new Date().toISOString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.color = type === 'error' ? '#c33' : type === 'success' ? '#3c3' : '#555';
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 메인 페이지 데이터 로드
+        async function loadMainPage() {
+            addLog('🌐 메인 페이지 로드 시작');
+            addLog(`🔌 TCP 3-Way Handshake 시작`);
+            addLog(`📤 HTTP GET 요청: ${API_URL}/api/main`);
+            addLog(`🍪 쿠키(sessionId)를 포함하여 전송`);
+
+            try {
+                const startTime = performance.now();
+                
+                const response = await fetch(`${API_URL}/api/main`, {
+                    method: 'GET',
+                    credentials: 'include' // 쿠키 전송
+                });
+                
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+                
+                addLog(`📦 HTTP 응답 수신 (${response.status}) - ${duration}ms`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ 인증 성공! 데이터 수신`, 'success');
+                    displayMainContent(data);
+                } else if (response.status === 401) {
+                    addLog(`❌ 인증 실패 (401 Unauthorized)`, 'error');
+                    addLog(`🔒 쿠키가 없거나 유효하지 않음`);
+                    displayError('인증되지 않았습니다. 로그인 페이지로 이동합니다.');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                addLog(`🔌 TCP 4-Way Handshake 시작 (연결 종료)`);
+
+            } catch (error) {
+                addLog(`💥 네트워크 오류: ${error.message}`, 'error');
+                displayError('서버에 연결할 수 없습니다.');
+                console.error('Error:', error);
+            }
+        }
+
+        // 메인 컨텐츠 표시
+        function displayMainContent(data) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="welcome-section">
+                    <h1>🎉 ${data.message}</h1>
+                    <p class="subtitle">${data.data.welcomeMessage}</p>
+                </div>
+
+                <div class="info-box">
+                    <h3>✅ 인증 정보</h3>
+                    <div class="info-item">
+                        <strong>상태:</strong> 로그인 완료
+                    </div>
+                    <div class="info-item">
+                        <strong>세션:</strong> 유효한 쿠키로 인증됨
+                    </div>
+                    <div class="info-item">
+                        <strong>타임스탬프:</strong> ${new Date(data.data.timestamp).toLocaleString('ko-KR')}
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h3>🔍 네트워크 분석 포인트</h3>
+                    <div class="info-item">
+                        • <strong>TCP 3-Way Handshake:</strong> 클라이언트와 서버 간 연결 수립 (SYN → SYN-ACK → ACK)
+                    </div>
+                    <div class="info-item">
+                        • <strong>HTTP 요청:</strong> GET /api/main + Cookie 헤더
+                    </div>
+                    <div class="info-item">
+                        • <strong>HTTP 응답:</strong> 200 OK + JSON 데이터
+                    </div>
+                    <div class="info-item">
+                        • <strong>TCP 4-Way Handshake:</strong> 연결 종료 (FIN → ACK → FIN → ACK)
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="location.reload()">🔄 새로고침</button>
+                    <button class="logout-btn" onclick="logout()">🚪 로그아웃</button>
+                </div>
+            `;
+        }
+
+        // 에러 표시
+        function displayError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error-box">
+                    <h2>❌ 오류</h2>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // 로그아웃
+        async function logout() {
+            addLog('🚪 로그아웃 요청 시작');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    addLog('✅ 로그아웃 성공', 'success');
+                    addLog('🍪 세션 쿠키 삭제됨');
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                addLog(`❌ 로그아웃 오류: ${error.message}`, 'error');
+                console.error('Logout error:', error);
+            }
+        }
+
+        // 페이지 로드 시 실행
+        window.addEventListener('load', () => {
+            addLog('🌐 페이지 로드 완료');
+            loadMainPage();
+        });
+    </script>
+</body>
+</html>
