@@ -369,7 +369,7 @@ docker exec -it network-monitor tcpdump -i any -nn
 
 ## 📅 제출 기한
 
-**2026년 1월 24일(토)**까지 제출
+**2026년 1월 24일(토)** 까지 제출
 
 ---
 
