@@ -369,13 +369,11 @@ docker exec -it network-monitor tcpdump -i any -nn
 
 ## 📅 제출 기한
 
-**2026년 1월 24일(토)**까지 제출
+**2026년 1월 24일(토)** 까지 제출
 
 ---
 
 ## 🎉 완성!
-
-이제 Docker 기반 로그인 시스템과 네트워크 분석 환경이 구축되었습니다!
 
 **다음 단계:**
 
@@ -385,5 +383,3 @@ docker exec -it network-monitor tcpdump -i any -nn
 4. 백엔드 로그 확인 (`docker logs -f login-backend`)
 5. 네트워크 패킷 분석 (`.\network-analysis.ps1` 또는 `./network-analysis.sh`)
 6. 브라우저 개발자 도구로 HTTP 요청/응답 확인
-
-**질문이나 문제가 있다면 README를 다시 읽어보세요!** 🚀
