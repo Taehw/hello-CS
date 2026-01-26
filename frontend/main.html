@@ -145,9 +145,169 @@
             border-radius: 12px;
             border: 1px solid #fcc;
         }
+
+        /* ============================================
+           알림 UI 스타일 (SSE 알림용)
+           ============================================ */
+        
+        /* 알림 컨테이너: 화면 우측 상단 고정 */
+        .notification-container {
+            position: fixed;           /* 스크롤해도 고정 위치 */
+            top: 20px;                 /* 상단에서 20px */
+            right: 20px;               /* 우측에서 20px */
+            width: 350px;              /* 알림 너비 */
+            max-height: 80vh;          /* 화면 높이의 80%까지만 */
+            overflow-y: auto;          /* 넘치면 스크롤 */
+            z-index: 1000;             /* 다른 요소보다 위에 표시 */
+        }
+
+        /* 개별 알림 아이템 */
+        .notification-item {
+            background: white;
+            border-radius: 12px;       /* 둥근 모서리 */
+            padding: 16px;
+            margin-bottom: 12px;       /* 알림 간격 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);  /* 그림자 효과 */
+            border-left: 4px solid #667eea;  /* 왼쪽 색상 바 */
+            animation: slideInRight 0.3s ease-out;  /* 등장 애니메이션 */
+            position: relative;
+        }
+
+        /* 알림 타입별 색상 */
+        .notification-item.info {
+            border-left-color: #667eea;  /* 파란색 */
+        }
+        .notification-item.success {
+            border-left-color: #4caf50;  /* 초록색 */
+        }
+        .notification-item.warning {
+            border-left-color: #ff9800;  /* 주황색 */
+        }
+        .notification-item.error {
+            border-left-color: #f44336;  /* 빨간색 */
+        }
+
+        /* 알림 헤더 (제목과 닫기 버튼) */
+        .notification-header {
+            display: flex;
+            justify-content: space-between;  /* 양쪽 끝 정렬 */
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        /* 알림 제목 */
+        .notification-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 알림 닫기 버튼 (X) */
+        .notification-close {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            margin: 0;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+        }
+
+        .notification-close:hover {
+            color: #333;
+            transform: none;           /* 버튼 hover 효과 제거 */
+            box-shadow: none;          /* 그림자 제거 */
+        }
+
+        /* 알림 메시지 내용 */
+        .notification-message {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        /* 알림 시간 */
+        .notification-time {
+            color: #999;
+            font-size: 11px;
+        }
+
+        /* 알림 개수 뱃지 (동그라미 안에 숫자) */
+        .notification-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;        /* 완전한 원 */
+            width: 24px;
+            height: 24px;
+            text-align: center;        /* 가로 중앙 정렬 */
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+            line-height: 24px;         /* 세로 중앙 정렬 */
+        }
+
+        /* SSE 연결 상태 표시 */
+        .sse-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        /* 연결됨 상태 (초록색) */
+        .sse-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* 연결 끊김 상태 (빨간색) */
+        .sse-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* 알림 등장 애니메이션 (우측에서 슬라이드) */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);  /* 우측 밖에서 시작 */
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);     /* 원래 위치로 */
+            }
+        }
+
+        /* 모든 알림 지우기 버튼 */
+        .clear-notifications-btn {
+            position: fixed;
+            top: 20px;
+            right: 380px;              /* 알림 컨테이너 왼쪽에 배치 */
+            background: #f44336;       /* 빨간색 */
+            padding: 8px 16px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
+    <!-- ============================================
+         알림 영역 (화면 우측 상단 고정)
+         ============================================ -->
+    <div class="notification-container" id="notificationContainer"></div>
+    
+    <!-- 모든 알림 지우기 버튼 (알림이 있을 때만 표시) -->
+    <button class="clear-notifications-btn" onclick="clearAllNotifications()" style="display: none;" id="clearBtn">
+        🗑️ 모두 지우기
+    </button>
+
     <div class="container">
         <div id="content">
             <div class="loading">
@@ -165,9 +325,16 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
+        // ============================================
+        // 전역 변수 설정
+        // ============================================
+        const API_URL = 'http://localhost:3000';  // 백엔드 서버 주소
+        let eventSource = null;                    // SSE 연결 객체
+        let notificationCount = 0;                 // 받은 알림 개수
         
+        // ============================================
         // 네트워크 로그 추가 함수
+        // ============================================
         function addLog(message, type = 'info') {
             const logDiv = document.getElementById('networkLog');
             const timestamp = new Date().toISOString();
@@ -223,13 +390,174 @@
             }
         }
 
-        // 메인 컨텐츠 표시
+        // ============================================
+        // SSE 알림 연결 함수
+        // ============================================
+        function connectSSE() {
+            addLog('🔔 SSE 알림 연결 시도 중...');
+            
+            // EventSource 객체 생성
+            // - 브라우저 내장 객체로 SSE 연결을 담당
+            // - withCredentials: true로 쿠키를 포함해서 전송 (인증용)
+            eventSource = new EventSource(`${API_URL}/api/notifications`, {
+                withCredentials: true
+            });
+
+            // ----------------------------------------
+            // 1. 연결 성공 이벤트 (onopen)
+            // ----------------------------------------
+            eventSource.onopen = () => {
+                addLog('✅ SSE 연결 성공! 알림 대기 중...', 'success');
+                updateSSEStatus(true);  // 화면에 연결 상태 표시
+            };
+
+            // ----------------------------------------
+            // 2. 메시지 수신 이벤트 (onmessage)
+            // ----------------------------------------
+            // 서버에서 'data: ...' 형식으로 보낸 메시지를 받음
+            eventSource.onmessage = (event) => {
+                try {
+                    // JSON 문자열을 객체로 파싱
+                    const notification = JSON.parse(event.data);
+                    addLog(`🔔 알림 수신: ${notification.message}`, 'success');
+                    
+                    // 화면에 알림 표시
+                    displayNotification(notification);
+                } catch (error) {
+                    console.error('알림 파싱 오류:', error);
+                }
+            };
+
+            // ----------------------------------------
+            // 3. 에러 발생 이벤트 (onerror)
+            // ----------------------------------------
+            // 네트워크 끊김, 서버 재시작 등의 상황에서 발생
+            eventSource.onerror = (error) => {
+                addLog('❌ SSE 연결 오류', 'error');
+                updateSSEStatus(false);  // 화면에 연결 끊김 표시
+                console.error('SSE Error:', error);
+                
+                // 자동 재연결 시도 (5초 후)
+                setTimeout(() => {
+                    // EventSource.CLOSED = 연결이 완전히 닫힌 상태
+                    if (eventSource.readyState === EventSource.CLOSED) {
+                        addLog('🔄 SSE 재연결 시도 중...');
+                        connectSSE();  // 재귀 호출로 다시 연결
+                    }
+                }, 5000);
+            };
+        }
+
+        // ============================================
+        // 알림 화면 표시 함수
+        // ============================================
+        function displayNotification(notification) {
+            // 'connected' 타입은 초기 연결 메시지이므로 화면에 표시하지 않음
+            if (notification.type === 'connected') {
+                return;
+            }
+
+            // 알림 개수 증가
+            notificationCount++;
+            
+            // DOM 요소 가져오기
+            const container = document.getElementById('notificationContainer');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            // 새 알림 div 생성
+            const notificationElement = document.createElement('div');
+            notificationElement.className = `notification-item ${notification.type || 'info'}`;
+            notificationElement.id = `notification-${notification.id}`;
+            
+            // 알림 내용 HTML 구성
+            notificationElement.innerHTML = `
+                <div class="notification-header">
+                    <span class="notification-title">
+                        ${notification.type === 'info' ? '🔔' : 
+                          notification.type === 'success' ? '✅' : 
+                          notification.type === 'warning' ? '⚠️' : '❌'} 
+                        ${notification.title}
+                        <span class="notification-badge">${notification.count || notificationCount}</span>
+                    </span>
+                    <button class="notification-close" onclick="removeNotification('${notification.id}')">×</button>
+                </div>
+                <div class="notification-message">${notification.message}</div>
+                <div class="notification-time">${notification.timestamp}</div>
+            `;
+            
+            // 컨테이너 맨 위에 새 알림 추가 (최신 알림이 위로)
+            container.insertBefore(notificationElement, container.firstChild);
+            
+            // 알림이 있으면 "모두 지우기" 버튼 표시
+            clearBtn.style.display = 'block';
+            
+            // 선택사항: 10초 후 자동 제거
+            // setTimeout(() => removeNotification(notification.id), 10000);
+        }
+
+        // ============================================
+        // 개별 알림 제거 함수
+        // ============================================
+        function removeNotification(id) {
+            const element = document.getElementById(`notification-${id}`);
+            if (element) {
+                // 사라지는 애니메이션 (슬라이드 역방향)
+                element.style.animation = 'slideInRight 0.3s ease-out reverse';
+                
+                // 애니메이션 끝난 후 DOM에서 제거
+                setTimeout(() => {
+                    element.remove();
+                    
+                    // 모든 알림이 제거되면 "모두 지우기" 버튼 숨김
+                    const container = document.getElementById('notificationContainer');
+                    const clearBtn = document.getElementById('clearBtn');
+                    if (container.children.length === 0) {
+                        clearBtn.style.display = 'none';
+                    }
+                }, 300);
+            }
+        }
+
+        // ============================================
+        // 모든 알림 제거 함수
+        // ============================================
+        function clearAllNotifications() {
+            const container = document.getElementById('notificationContainer');
+            const clearBtn = document.getElementById('clearBtn');
+            
+            // 컨테이너 비우기
+            container.innerHTML = '';
+            
+            // "모두 지우기" 버튼 숨김
+            clearBtn.style.display = 'none';
+            
+            addLog('🗑️ 모든 알림 제거됨');
+        }
+
+        // ============================================
+        // SSE 연결 상태 업데이트 함수
+        // ============================================
+        function updateSSEStatus(isConnected) {
+            const statusElement = document.getElementById('sseStatus');
+            if (statusElement) {
+                // 연결 상태에 따라 CSS 클래스와 텍스트 변경
+                statusElement.className = `sse-status ${isConnected ? 'connected' : 'disconnected'}`;
+                statusElement.textContent = isConnected ? '🟢 알림 연결됨' : '🔴 알림 끊김';
+            }
+        }
+
+        // ============================================
+        // 메인 컨텐츠 표시 함수
+        // ============================================
         function displayMainContent(data) {
             const content = document.getElementById('content');
             content.innerHTML = `
                 <div class="welcome-section">
                     <h1>🎉 ${data.message}</h1>
-                    <p class="subtitle">${data.data.welcomeMessage}</p>
+                    <p class="subtitle">
+                        ${data.data.welcomeMessage}
+                        <span id="sseStatus" class="sse-status disconnected">🔴 알림 대기</span>
+                    </p>
                 </div>
 
                 <div class="info-box">
@@ -246,6 +574,22 @@
                 </div>
 
                 <div class="info-box">
+                    <h3>🔔 SSE 알림 서비스</h3>
+                    <div class="info-item">
+                        • <strong>연결 방식:</strong> Server-Sent Events (SSE)
+                    </div>
+                    <div class="info-item">
+                        • <strong>알림 주기:</strong> 10초마다 자동 전송
+                    </div>
+                    <div class="info-item">
+                        • <strong>특징:</strong> 단방향 통신 (서버 → 클라이언트)
+                    </div>
+                    <div class="info-item">
+                        • <strong>화면 위치:</strong> 우측 상단에 알림이 쌓입니다
+                    </div>
+                </div>
+
+                <div class="info-box">
                     <h3>🔍 네트워크 분석 포인트</h3>
                     <div class="info-item">
                         • <strong>TCP 3-Way Handshake:</strong> 클라이언트와 서버 간 연결 수립 (SYN → SYN-ACK → ACK)
@@ -257,6 +601,9 @@
                         • <strong>HTTP 응답:</strong> 200 OK + JSON 데이터
                     </div>
                     <div class="info-item">
+                        • <strong>SSE 연결:</strong> GET /api/notifications (Keep-Alive)
+                    </div>
+                    <div class="info-item">
                         • <strong>TCP 4-Way Handshake:</strong> 연결 종료 (FIN → ACK → FIN → ACK)
                     </div>
                 </div>
@@ -266,6 +613,11 @@
                     <button class="logout-btn" onclick="logout()">🚪 로그아웃</button>
                 </div>
             `;
+            
+            // ----------------------------------------
+            // 메인 페이지 로드 후 SSE 연결 시작
+            // ----------------------------------------
+            connectSSE();
         }
 
         // 에러 표시
@@ -279,9 +631,17 @@
             `;
         }
 
-        // 로그아웃
+        // ============================================
+        // 로그아웃 함수
+        // ============================================
         async function logout() {
             addLog('🚪 로그아웃 요청 시작');
+            
+            // SSE 연결 종료 (중요! 메모리 누수 방지)
+            if (eventSource) {
+                eventSource.close();
+                addLog('🔌 SSE 연결 종료');
+            }
             
             try {
                 const response = await fetch(`${API_URL}/api/logout`, {
@@ -300,7 +660,19 @@
             }
         }
 
+        // ============================================
+        // 페이지 종료 시 SSE 연결 정리
+        // ============================================
+        // 브라우저를 닫거나 다른 페이지로 이동할 때 실행
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+
+        // ============================================
         // 페이지 로드 시 실행
+        // ============================================
         window.addEventListener('load', () => {
             addLog('🌐 페이지 로드 완료');
             loadMainPage();

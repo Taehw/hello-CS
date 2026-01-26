@@ -208,6 +208,99 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ============================================
+// 5. SSE (Server-Sent Events) 알림 엔드포인트
+// ============================================
+// SSE란?
+// - 서버에서 클라이언트로 실시간 데이터를 push하는 기술
+// - WebSocket과 달리 단방향 통신 (서버 → 클라이언트만)
+// - HTTP 프로토콜 기반이라 방화벽 친화적
+// - 자동 재연결 기능 내장
+app.get('/api/notifications', isAuthenticated, (req, res) => {
+  console.log('🔔 SSE 알림 연결 시작');
+  
+  // ----------------------------------------
+  // SSE를 위한 HTTP 헤더 설정
+  // ----------------------------------------
+  
+  // 1. Content-Type을 'text/event-stream'으로 설정
+  // - 브라우저에게 "이건 SSE 스트림이야"라고 알려줌
+  // - 일반 HTTP 응답과 다르게 연결을 계속 유지
+  res.setHeader('Content-Type', 'text/event-stream');
+  
+  // 2. Cache-Control: 'no-cache'
+  // - 프록시나 브라우저가 이 응답을 캐싱하지 못하게 함
+  // - 실시간 데이터이므로 캐싱하면 안됨
+  res.setHeader('Cache-Control', 'no-cache');
+  
+  // 3. Connection: 'keep-alive'
+  // - TCP 연결을 계속 유지하라고 지시
+  // - 일반 HTTP는 응답 후 연결을 끊지만, SSE는 연결 유지 필요
+  res.setHeader('Connection', 'keep-alive');
+  
+  // 4. CORS 헤더 설정
+  // - 프론트엔드(8080포트)에서 백엔드(3000포트)로의 접근 허용
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8080');
+  
+  // 5. 쿠키 전송 허용 (인증을 위해 필요)
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // ----------------------------------------
+  // 초기 연결 확인 메시지 전송
+  // ----------------------------------------
+  // SSE 데이터 형식:
+  // data: {JSON 데이터}
+  // (빈 줄 2개로 메시지 구분: \n\n)
+  res.write('data: {"type":"connected","message":"알림 서비스에 연결되었습니다"}\n\n');
+  
+  // ----------------------------------------
+  // 알림 카운터 초기화
+  // ----------------------------------------
+  let notificationCount = 0;
+  
+  // ----------------------------------------
+  // 10초마다 알림 전송 (setInterval 사용)
+  // ----------------------------------------
+  const intervalId = setInterval(() => {
+    // 카운터 증가
+    notificationCount++;
+    
+    // 전송할 알림 데이터 생성
+    const notification = {
+      id: Date.now(),                  // 고유 ID (현재 시간의 밀리초)
+      type: 'info',                     // 알림 타입 (info, success, warning, error)
+      title: '새로운 알림',             // 알림 제목
+      message: `${notificationCount}번째 알림입니다`,  // 알림 내용
+      timestamp: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }), // 한국 시간
+      count: notificationCount          // 알림 번호
+    };
+    
+    // 서버 콘솔에 로그 출력
+    console.log(`📤 알림 전송 (${notificationCount}번째):`, notification);
+    
+    // SSE 형식으로 클라이언트에게 데이터 전송
+    // - data: 로 시작
+    // - JSON.stringify로 객체를 문자열로 변환
+    // - \n\n으로 메시지 종료 (중요!)
+    res.write(`data: ${JSON.stringify(notification)}\n\n`);
+  }, 10000); // 10000ms = 10초
+  
+  // ----------------------------------------
+  // 클라이언트 연결 종료 처리
+  // ----------------------------------------
+  // 사용자가 브라우저를 닫거나 페이지를 이동하면 'close' 이벤트 발생
+  req.on('close', () => {
+    console.log('❌ SSE 연결 종료');
+    
+    // setInterval 정리 (메모리 누수 방지!)
+    // - 타이머를 멈추지 않으면 서버 메모리를 계속 사용
+    clearInterval(intervalId);
+    
+    // 응답 스트림 종료
+    res.end();
+  });
+});
+
 // 404 처리
 app.use((req, res) => {
   console.log('❌ 404: 경로를 찾을 수 없음');
