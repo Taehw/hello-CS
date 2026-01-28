@@ -221,6 +221,11 @@
             try {
                 const startTime = performance.now();
                 
+                //환경에 따라 동적으로 설정
+                const API_URL = window.location.hostname.includes('ngrok') 
+                ? `https://${window.location.hostname}` //ngrok 도메인 사용
+                : 'http://localhost:3000'; //로컬개발
+
                 const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
                     headers: {

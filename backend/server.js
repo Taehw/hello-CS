@@ -62,7 +62,11 @@ app.use(morgan('combined'));
 
 // CORS 설정 (프론트엔드와 백엔드가 다른 컨테이너)
 app.use(cors({
-  origin: 'http://localhost:8080', // 프론트엔드 주소, "이 주소에서 오는 요청만 허락해줘"
+  origin: [
+    'http://localhost:8080', //로컬개발발
+    // ngrok frontend URL
+    /\.ngrok\.io$/    // 모든 ngrok 도메인 허용
+  ], // 프론트엔드 주소, "이 주소에서 오는 요청만 허락해줘"
   credentials: true // 쿠키 전송 허용
 }));
 
@@ -160,7 +164,8 @@ app.post('/api/login', (req, res) => {
     res.cookie('sessionId', sessionId, {
       httpOnly: true,  // XSS 공격 방지
       maxAge: 24 * 60 * 60 * 1000, // 24시간
-      sameSite: 'lax'
+      sameSite: 'none',
+      secure: true //HTTPS 사용 시 설정(ngrok은 HTTPS 사용용)
     });
     
     res.json({ 
