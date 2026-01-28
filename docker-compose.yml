@@ -5,8 +5,8 @@ services:
   backend:
     build: ./backend
     container_name: login-backend
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000" #프록시를 통해서만 접근근
     networks:
       - app-network
     environment:
@@ -24,11 +24,29 @@ services:
   frontend:
     build: ./frontend
     container_name: login-frontend
-    ports:
-      - "8080:80"
+    # ports:
+    #   - "8080:80" #프록시를 통해서만 접근
     networks:
       - app-network
     depends_on:
+      - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # 리버스 프록시 서비스
+  proxy:
+    build: ./proxy
+    container_name: reverse-proxy
+    ports:
+      - "8080:80"  # 유일한 외부 노출 포트
+    networks:
+      - app-network
+    depends_on:
+      - frontend
       - backend
     logging:
       driver: "json-file"
