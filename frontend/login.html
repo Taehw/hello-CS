@@ -182,7 +182,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
+        // const API_URL = 'http://localhost:3000'; //프록시 사용으로 불필요요
         
         // 네트워크 로그 추가 함수
         function addLog(message, type = 'info') {
@@ -222,11 +222,11 @@
                 const startTime = performance.now();
                 
                 //환경에 따라 동적으로 설정
-                const API_URL = window.location.hostname.includes('ngrok') 
-                ? `https://${window.location.hostname}` //ngrok 도메인 사용
-                : 'http://localhost:3000'; //로컬개발
+                //const API_URL = window.location.hostname.includes('ngrok') 
+                //? `https://${window.location.hostname}` //ngrok 도메인 사용
+                //: 'http://localhost:3000'; //로컬개발
 
-                const response = await fetch(`${API_URL}/api/login`, {
+                const response = await fetch('/api/login', { //상대 경로로 수정
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

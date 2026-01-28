@@ -328,7 +328,7 @@
         // ============================================
         // 전역 변수 설정
         // ============================================
-        const API_URL = 'http://localhost:3000';  // 백엔드 서버 주소
+        //const API_URL = 'http://localhost:3000';  // 백엔드 서버 주소 - 프록시 사용으로 불필요
         let eventSource = null;                    // SSE 연결 객체
         let notificationCount = 0;                 // 받은 알림 개수
         
@@ -350,13 +350,13 @@
         async function loadMainPage() {
             addLog('🌐 메인 페이지 로드 시작');
             addLog(`🔌 TCP 3-Way Handshake 시작`);
-            addLog(`📤 HTTP GET 요청: ${API_URL}/api/main`);
+            addLog(`📤 HTTP GET 요청: /api/main`);
             addLog(`🍪 쿠키(sessionId)를 포함하여 전송`);
 
             try {
                 const startTime = performance.now();
                 
-                const response = await fetch(`${API_URL}/api/main`, {
+                const response = await fetch('/api/main', { //상대 경로로 수정
                     method: 'GET',
                     credentials: 'include' // 쿠키 전송
                 });
@@ -399,7 +399,7 @@
             // EventSource 객체 생성
             // - 브라우저 내장 객체로 SSE 연결을 담당
             // - withCredentials: true로 쿠키를 포함해서 전송 (인증용)
-            eventSource = new EventSource(`${API_URL}/api/notifications`, {
+            eventSource = new EventSource('/api/notifications', { //상대 경로로 수정
                 withCredentials: true
             });
 
@@ -644,7 +644,7 @@
             }
             
             try {
-                const response = await fetch(`${API_URL}/api/logout`, {
+                const response = await fetch('/api/logout', { //상대 경로로 수정
                     method: 'POST',
                     credentials: 'include'
                 });
