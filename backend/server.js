@@ -63,8 +63,9 @@ app.use(morgan('combined'));
 // CORS 설정 (프론트엔드와 백엔드가 다른 컨테이너)
 app.use(cors({
   origin: [
-    'http://localhost:8080', //로컬개발발
+    'http://localhost:8080', //로컬개발
     // ngrok frontend URL
+    /\.ngrok-free\.dev$/,  // ← 추가 필요
     /\.ngrok\.io$/    // 모든 ngrok 도메인 허용
   ], // 프론트엔드 주소, "이 주소에서 오는 요청만 허락해줘"
   credentials: true // 쿠키 전송 허용
