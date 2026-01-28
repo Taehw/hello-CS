@@ -60,14 +60,9 @@ app.use((req, res, next) => { //app.use - 우리 서버에 이기능을 추가, 
 //'combined': 로그를 어떤 형식으로 출력할지 결정하는 포맷(Format) 이름 - apache 서버의 표준과 동일, 상세한 정보를 담음음
 app.use(morgan('combined'));
 
-// CORS 설정 (프론트엔드와 백엔드가 다른 컨테이너)
+// CORS 설정 (프록시를 통한 요청 허용)
 app.use(cors({
-  origin: [
-    'http://localhost:8080', //로컬개발
-    // ngrok frontend URL
-    /\.ngrok-free\.dev$/,  // ← 추가 필요
-    /\.ngrok\.io$/    // 모든 ngrok 도메인 허용
-  ], // 프론트엔드 주소, "이 주소에서 오는 요청만 허락해줘"
+  origin: true,  // 모든 origin 허용 (프록시가 origin 관리)
   credentials: true // 쿠키 전송 허용
 }));
 
